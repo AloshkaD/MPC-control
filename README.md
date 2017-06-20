@@ -1,6 +1,56 @@
 # CarND-Controls-MPC
 Self-Driving Car Engineer Nanodegree Program
 
+This implemintation is based on the quiz implementation in [1]
+## Model Description
+1. The state vector is represented by the variables:
+* cte, epsi the cross track error. Ideally, both of these errors would be 0 - which indicate that there would be no difference from the actual vehicle position and heading to the desired position and heading. 
+* x, y Vehicle coordinates
+* psi Vehicle bearing
+* v Vehicle velocity
+2. The vehicle is considered to have two actuators only for simplicity
+3. 
+4. Model initialization
+
+'''
+fg[1 + x_start] = vars[x_start];
+fg[1 + y_start] = vars[y_start];
+fg[1 + psi_start] = vars[psi_start];
+fg[1 + v_start] = vars[v_start];
+fg[1 + cte_start] = vars[cte_start];
+fg[1 + epsi_start] = vars[epsi_start];
+'''
+5. Model equation
+
+'''
+x_[t] = x[t-1] + v[t-1] * cos(psi[t-1]) * dt
+y_[t] = y[t-1] + v[t-1] * sin(psi[t-1]) * dt
+psi_[t] = psi[t-1] + v[t-1] / Lf * delta[t-1] * dt
+v_[t] = v[t-1] + a[t-1] * dt
+cte[t] = f(x[t-1]) - y[t-1] + v[t-1] * sin(epsi[t-1]) * dt
+epsi[t] = psi[t] - psides[t-1] + v[t-1] * delta[t-1] / Lf * dt
+'''
+## Prediction horizon N*dt:
+
+The product of N and dt gives us the prediction horizon T which helps the model foresee the road further. Choosing a high value of the number of time steps in the future can lead to more computation as well as unstable driving. I have tested values between 10 and 30 and I found that starting with N bigger than 18 the car drives erratically before sharp turns. I have also considered values between 0. -0.4 for dt which describes how much time lapse between actuations and found than a value of 0.2 was the best for making the can as stable as possible. a lower dt value results in delayed response to the road condition, while a high value made the car drive erratically. 
+
+## Polynomial Fitting and MPC Preprocessing
+
+The polynomial is fitted with a first degree polynomial since these are 2-element vectors a 1-degree polynomial (straight line).
+'''
+auto coeffs = polyfit(ptsx, ptsy, 1);
+'''
+Where pstx and psty contain the vehicle position py and py. Therefore the position was transformed into the vehicle coordinate to improve the accuracy of the polynomial fit. 
+
+## Model Predictive Control with Latency
+
+One major advantage for using MPC over Pid is that it can deal with latency much more effectively. Carefully choosing the prediction horizon value help the system plan in the future and reduce the latency.
+The initial values and weights for the steering, throttle, and speed are chosen to lower the latency. the steering and throttle weights were chosen to be small and weak on the velocity.
+
+
+[1] https://github.com/udacity/CarND-MPC-Quizzes/blob/master/mpc_to_line/solution/MPC.cpp
+
+
 ---
 
 ## Dependencies

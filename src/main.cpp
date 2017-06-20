@@ -97,9 +97,54 @@ int main() {
           *
           * Both are in between [-1, 1].
           *
+          *
           */
-          double steer_value;
-          double throttle_value;
+          //############################
+          vector<double> vehicle_xs(ptsx.size());
+          vector<double> vehicle_ys(ptsy.size());
+          for (auto i = 0; i < ptsx.size(); ++i) {
+            // centered
+            double centered_x = ptsx[i] - px;
+            double centered_y = ptsy[i] - py;
+            // rotated
+            vehicle_xs[i] = centered_x * cos(-psi) - centered_y * sin(-psi);
+            vehicle_ys[i] = centered_x * sin(-psi) + centered_y * cos(-psi);
+          }
+          
+
+          // estimate the track as a 3rd polynomial
+          Eigen::Map<Eigen::VectorXd> xs(&vehicle_xs[0], vehicle_xs.size());
+          Eigen::Map<Eigen::VectorXd> ys(&vehicle_ys[0], vehicle_ys.size());
+          auto coeffs = polyfit(xs, ys, 3);
+
+          // From now on, vehicle position also transformed to
+          /*
+          px = 0;
+          py = 0;
+          psi = 0;
+          */
+
+          // estimate error - the derivative is actually
+          // linear when px = 0
+          double cte = polyeval(coeffs, 0) /*- py*/;
+          double epsi = atan(coeffs[1]) /*- psi*/;
+          
+          /*
+          * TODO: Calculate steeering angle and throttle using MPC.
+          *
+          * Both are in between [-1, 1].
+          *
+          */
+          // now the vehicle state will always be in (x=0, y=0) with psi=0
+          Eigen::VectorXd state(6);
+          state << /*px=*/0, /*py=*/0, /*psi=*/0, v, cte, epsi;
+
+          auto actuator = mpc.Solve(state, coeffs);
+
+          //##########################################__complex_abs
+
+          double steer_value = -actuator[0];
+          double throttle_value = actuator[1];
 
           json msgJson;
           // NOTE: Remember to divide by deg2rad(25) before you send the steering value back.

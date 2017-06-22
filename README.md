@@ -36,9 +36,9 @@ The product of N and dt gives us the prediction horizon T which helps the model 
 
 ## Polynomial Fitting and MPC Preprocessing
 
-The polynomial is fitted with a first degree polynomial since these are 2-element vectors a 1-degree polynomial (straight line).
+The polynomial is fitted with a 3-degree polynomial .
 '''
-auto coeffs = polyfit(ptsx, ptsy, 1);
+auto coeffs = polyfit(ptsx, ptsy, 3);
 '''
 Where pstx and psty contain the vehicle position py and py. Therefore the position was transformed into the vehicle coordinate to improve the accuracy of the polynomial fit. 
 
